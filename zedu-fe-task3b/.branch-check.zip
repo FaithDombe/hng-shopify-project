@@ -1,0 +1,59 @@
+﻿2026-10-05T22:53:41.3573484Z Current runner version: '2.337.0'
+2026-10-05T22:53:41.3593504Z ##[group]Runner Image Provisioner
+2026-10-05T22:53:41.3594197Z Hosted Compute Agent
+2026-10-05T22:53:41.3594753Z Version: 20260901.588
+2026-10-05T22:53:41.3595309Z Commit: f88ec8081b781fac6c440065ac7ff9e710ce3d0b
+2026-10-05T22:53:41.3595896Z Build Date: 2026-09-01T19:56:44Z
+2026-10-05T22:53:41.3596484Z Worker ID: {de939bcb-9033-4bae-8a03-52d8886d679d}
+2026-10-05T22:53:41.3597060Z Azure Region: westus3
+2026-10-05T22:53:41.3597513Z ##[endgroup]
+2026-10-05T22:53:41.3598766Z ##[group]Operating System
+2026-10-05T22:53:41.3599298Z Ubuntu
+2026-10-05T22:53:41.3599771Z 24.04.5
+2026-10-05T22:53:41.3600207Z LTS
+2026-10-05T22:53:41.3600642Z ##[endgroup]
+2026-10-05T22:53:41.3601194Z ##[group]Runner Image
+2026-10-05T22:53:41.3601679Z Image: ubuntu-24.04
+2026-10-05T22:53:41.3602166Z Version: 20260927.320.1
+2026-10-05T22:53:41.3603208Z Included Software: https://github.com/actions/runner-images/blob/ubuntu24/20260927.320/images/ubuntu/Ubuntu2404-Readme.md
+2026-10-05T22:53:41.3604511Z Image Release: https://github.com/actions/runner-images/releases/tag/ubuntu24%2F20260927.320
+2026-10-05T22:53:41.3605285Z ##[endgroup]
+2026-10-05T22:53:41.3606313Z ##[group]GITHUB_TOKEN Permissions
+2026-10-05T22:53:41.3607815Z Contents: read
+2026-10-05T22:53:41.3608354Z Metadata: read
+2026-10-05T22:53:41.3608998Z PullRequests: read
+2026-10-05T22:53:41.3609460Z ##[endgroup]
+2026-10-05T22:53:41.3611109Z Secret source: Actions
+2026-10-05T22:53:41.3611880Z Cache mode: read
+2026-10-05T22:53:41.3612522Z Prepare workflow directory
+2026-10-05T22:53:41.6295239Z Prepare all required actions
+2026-10-05T22:53:41.6491537Z Complete job name: Branch name
+2026-10-05T22:53:41.7423756Z ##[group]Run if [ "$SYNC" = "true" ]; then
+2026-10-05T22:53:41.7424331Z [36;1mif [ "$SYNC" = "true" ]; then[0m
+2026-10-05T22:53:41.7424885Z [36;1m  echo "::notice::Sync PR; branch-name check waived."[0m
+2026-10-05T22:53:41.7425414Z [36;1m  exit 0[0m
+2026-10-05T22:53:41.7425764Z [36;1mfi[0m
+2026-10-05T22:53:41.7426499Z [36;1mpattern='^(feat|fix|hotfix|test|docs|refactor|chore|perf|security)/([A-Za-z]+-)?[[:digit:]]+-[a-z[:digit:]][a-z[:digit:]-]*$'[0m
+2026-10-05T22:53:41.7427333Z [36;1mif [[ "$HEAD_REF" =~ $pattern ]]; then[0m
+2026-10-05T22:53:41.7427796Z [36;1m  echo "OK: $HEAD_REF"[0m
+2026-10-05T22:53:41.7428219Z [36;1melif [ "$REVIEWER" = true ]; then[0m
+2026-10-05T22:53:41.7429152Z [36;1m  echo "::notice::$HEAD_REF doesn't match the ticket format; allowed because $AUTHOR is a reviewer."[0m
+2026-10-05T22:53:41.7429845Z [36;1melse[0m
+2026-10-05T22:53:41.7430848Z [36;1m  echo "::error::Branch '$HEAD_REF' doesn't match <type>/<ticket-id>-<short-description>, e.g. fix/245-login-redirect. Open the PR from a correctly named ticket branch (see CONTRIBUTING.md)."[0m
+2026-10-05T22:53:41.7431917Z [36;1m  exit 1[0m
+2026-10-05T22:53:41.7432265Z [36;1mfi[0m
+2026-10-05T22:53:41.8445072Z shell: /usr/bin/bash -e {0}
+2026-10-05T22:53:41.8445702Z env:
+2026-10-05T22:53:41.8449426Z   GH_TOKEN: ***
+2026-10-05T22:53:41.8449831Z   REPO: zedu-hng/zedu-fe
+2026-10-05T22:53:41.8450216Z   PR_NUMBER: 336
+2026-10-05T22:53:41.8450589Z   HEAD_REPO: FaithDombe/zedu-fe
+2026-10-05T22:53:41.8451051Z   HEAD_REF: fix/flamingo-ZFL-00005-update-username
+2026-10-05T22:53:41.8451534Z   AUTHOR: FaithDombe
+2026-10-05T22:53:41.8451887Z   LABELS: 
+2026-10-05T22:53:41.8452214Z   REVIEWER: false
+2026-10-05T22:53:41.8452557Z   SYNC: false
+2026-10-05T22:53:41.8452884Z ##[endgroup]
+2026-10-05T22:53:41.8671720Z ##[error]Branch 'fix/flamingo-ZFL-00005-update-username' doesn't match <type>/<ticket-id>-<short-description>, e.g. fix/245-login-redirect. Open the PR from a correctly named ticket branch (see CONTRIBUTING.md).
+2026-10-05T22:53:41.8685075Z ##[error]Process completed with exit code 1.
+2026-10-05T22:53:41.8898019Z Cleaning up orphan processes

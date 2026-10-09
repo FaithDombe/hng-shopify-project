@@ -1,0 +1,20 @@
+{
+  "expo": {
+    "name": "Everyday Market",
+    "slug": "everyday-market",
+    "scheme": "everydaymarket",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "light",
+    "ios": {
+      "bundleIdentifier": "com.everydaymarket.shop"
+    },
+    "android": {
+      "package": "com.everydaymarket.shop"
+    },
+    "plugins": [
+      "expo-secure-store",
+      "expo-web-browser"
+    ]
+  }
+}

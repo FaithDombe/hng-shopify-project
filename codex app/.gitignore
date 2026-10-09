@@ -1,0 +1,10 @@
+# Installed dependencies and generated build output
+frontend/node_modules/
+frontend/dist/
+
+# Local task data backup (never upload)
+local-data/
+
+# Python cache files from any local tooling
+__pycache__/
+*.py[cod]

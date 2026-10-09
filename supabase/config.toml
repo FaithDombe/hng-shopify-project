@@ -1,0 +1,4 @@
+project_id = "internship-shop"
+
+[functions.send-order-confirmation]
+verify_jwt = true

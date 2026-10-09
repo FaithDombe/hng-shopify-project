@@ -1,0 +1,58 @@
+{
+  "changedFiles": 24,
+  "errors": 7,
+  "warnings": 0,
+  "findings": [
+    {
+      "section": "structure",
+      "severity": "error",
+      "file": "src/app/(client)/[org]/home/channels/[id]/settings/channel-management.tsx",
+      "message": "New component outside allowed trees. Use src/components/ui/, _components/, or settings components.",
+      "line": null
+    },
+    {
+      "section": "structure",
+      "severity": "error",
+      "file": "src/app/(client)/[org]/home/channels/[id]/settings/history/page.tsx",
+      "message": "New component outside allowed trees. Use src/components/ui/, _components/, or settings components.",
+      "line": null
+    },
+    {
+      "section": "structure",
+      "severity": "error",
+      "file": "src/app/(client)/[org]/home/channels/[id]/settings/page.tsx",
+      "message": "New component outside allowed trees. Use src/components/ui/, _components/, or settings components.",
+      "line": null
+    },
+    {
+      "section": "structure",
+      "severity": "error",
+      "file": "src/app/(client)/[org]/home/channels/[id]/settings/system-message.tsx",
+      "message": "New component outside allowed trees. Use src/components/ui/, _components/, or settings components.",
+      "line": null
+    },
+    {
+      "section": "structure",
+      "severity": "error",
+      "file": "src/utils/apple-emoji.tsx",
+      "message": "New component outside allowed trees. Use src/components/ui/, _components/, or settings components.",
+      "line": null
+    },
+    {
+      "section": "hardcodedUrls",
+      "severity": "error",
+      "file": "src/utils/apple-emoji.tsx",
+      "message": "Hardcoded URL added: \"https://cdn.jsdelivr.net/npm/emoji-datasource-apple@15.0.1/img/apple/64/${unified}.png\". Put base URLs and secrets in environment variables (e.g. process.env.NEXT_PUBLIC_BASE_URL).",
+      "line": null
+    },
+    {
+      "section": "eslint",
+      "severity": "error",
+      "file": "changed-files",
+      "message": "ESLint reported issues in changed files.",
+      "line": null
+    }
+  ],
+  "markdown": "## PR Review Bot\n\n**24 files changed** | 7 errors | 0 warnings\n\n### Structure\n\n- **ERROR**: `src/app/(client)/[org]/home/channels/[id]/settings/channel-management.tsx` — New component outside allowed trees. Use src/components/ui/, _components/, or settings components.\n- **ERROR**: `src/app/(client)/[org]/home/channels/[id]/settings/history/page.tsx` — New component outside allowed trees. Use src/components/ui/, _components/, or settings components.\n- **ERROR**: `src/app/(client)/[org]/home/channels/[id]/settings/page.tsx` — New component outside allowed trees. Use src/components/ui/, _components/, or settings components.\n- **ERROR**: `src/app/(client)/[org]/home/channels/[id]/settings/system-message.tsx` — New component outside allowed trees. Use src/components/ui/, _components/, or settings components.\n- **ERROR**: `src/utils/apple-emoji.tsx` — New component outside allowed trees. Use src/components/ui/, _components/, or settings components.\n\n### Hardcoded URLs\n\n- **ERROR**: `src/utils/apple-emoji.tsx` — Hardcoded URL added: \"https://cdn.jsdelivr.net/npm/emoji-datasource-apple@15.0.1/img/apple/64/${unified}.png\". Put base URLs and secrets in environment variables (e.g. process.env.NEXT_PUBLIC_BASE_URL).\n\n### ESLint (changed files)\n\n- **ERROR**: `changed-files` — ESLint reported issues in changed files.\n\n",
+  "success": false
+}

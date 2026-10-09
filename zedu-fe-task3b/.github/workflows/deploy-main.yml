@@ -1,0 +1,70 @@
+name: Deploy Zedu Frontend - main
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy_zedu_fe_main:
+    runs-on: [self-hosted, zedu-runner]
+
+    env:
+      CI: true
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: 8
+
+      - name: Remove stale node_modules
+        run: rm -rf node_modules
+
+      - name: Install node_modules
+        run: pnpm install --no-frozen-lockfile
+
+      - name: Build on workflow first
+        run: pnpm build
+
+      - name: Rebuild frontend on deployment server
+        run: |
+          eval $(ssh-agent -s)
+          trap 'ssh-agent -k' EXIT
+
+          echo "${{ secrets.ZEDU_SERVER_SSH_KEY }}" | ssh-add -
+
+          ssh -o StrictHostKeyChecking=no \
+            ${{ secrets.ZEDU_SERVER_SSH_USER }}@${{ secrets.ZEDU_SERVER_SSH_HOST }} << 'ENDSSH'
+            set -e
+
+            cd /var/www/zedu_fe
+
+            git reset --hard
+            git pull origin main
+
+            export CI=true
+
+            pnpm install --no-frozen-lockfile
+            pnpm build
+          ENDSSH
+
+      - name: Pull and Restart App
+        run: |
+          eval $(ssh-agent -s)
+          trap 'ssh-agent -k' EXIT
+
+          echo "${{ secrets.ZEDU_SERVER_SSH_KEY }}" | ssh-add -
+
+          ssh -o StrictHostKeyChecking=no \
+            ${{ secrets.ZEDU_SERVER_SSH_USER }}@${{ secrets.ZEDU_SERVER_SSH_HOST }} << 'ENDSSH'
+            set -e
+
+            cd /var/www/zedu_fe
+
+            supervisorctl restart zedu_fe
+          ENDSSH

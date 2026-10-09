@@ -1,0 +1,14 @@
+﻿node_modules/
+dist/
+.vercel/
+local-data/
+__pycache__/
+*.py[cod]
+
+.env.local
+.env
+mobile/.env
+mobile/.expo/
+mobile/.expo-cli-home/
+mobile/expo-qr.png
+supabase/.temp/

@@ -1,0 +1,103 @@
+name: PR Review Bot
+
+on:
+  pull_request:
+    branches:
+      - dev
+      - central-staging
+      - staging
+      - main
+    types:
+      - opened
+      - synchronize
+      - reopened
+      - ready_for_review
+  push:
+    branches:
+      - staging
+      - main
+
+concurrency:
+  group: pr-review-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  pr-review:
+    name: Structure, reuse, URLs, and secrets
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      # Run the review with the base branch's rules, not the ones frozen into this PR's cached
+      # test-merge ref. GitHub only refreshes refs/pull/<n>/merge on PR events, so without this a
+      # merged fix to the bot's config would keep producing a stale verdict. .github/ is protected,
+      # so the base copy is the trusted one.
+      - name: Use the base branch's review rules
+        if: github.event_name == 'pull_request'
+        run: |
+          git fetch --no-tags origin "${{ github.base_ref }}"
+          git checkout FETCH_HEAD -- \
+            .github/pr-review.config.json \
+            .github/scripts/pr-review
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10.27.0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Run PR review
+        id: review
+        continue-on-error: true
+        run: |
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            node .github/scripts/pr-review/run.mjs \
+              --base "origin/${{ github.base_ref }}" \
+              --head HEAD \
+              --config .github/pr-review.config.json \
+              --output review-report.json
+          else
+            BEFORE="${{ github.event.before }}"
+            AFTER="${{ github.event.after }}"
+            if [ "$BEFORE" = "0000000000000000000000000000000000000000" ]; then
+              BEFORE="HEAD~1"
+            fi
+            node .github/scripts/pr-review/run.mjs \
+              --base "$BEFORE" \
+              --head "$AFTER" \
+              --config .github/pr-review.config.json \
+              --output review-report.json
+          fi
+
+      # Upload the report instead of commenting: this job checks out and lints PR code, so on fork
+      # PRs its token is read-only and it cannot post a comment. "PR Review comment" picks the
+      # artifact up and posts it with a trusted write token after this run completes.
+      - name: Upload review report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: pr-review-report
+          path: |
+            review-report.md
+            review-report.json
+          if-no-files-found: ignore
+          retention-days: 7
+
+      - name: Fail on review errors
+        if: steps.review.outcome == 'failure'
+        run: exit 1
