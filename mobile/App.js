@@ -12,15 +12,28 @@ const supabase = process.env.EXPO_PUBLIC_SUPABASE_URL && process.env.EXPO_PUBLIC
   }) : null;
 
 const products = [
-  { id: 1, name: 'Everyday Rice', category: 'Groceries', price: 12500, icon: '🍚', label: 'Customer favourite', tone: '#f1e5cc' },
-  { id: 2, name: 'Classic Blender', category: 'Home & Kitchen', price: 28500, icon: '🥤', label: 'Good value', tone: '#e0e9dd' },
-  { id: 3, name: 'Soft Cotton T-Shirt', category: 'Fashion', price: 9500, icon: '👕', label: 'New arrival', tone: '#e9dfe2' },
-  { id: 4, name: 'Wireless Headphones', category: 'Electronics', price: 42000, icon: '🎧', label: 'Popular pick', tone: '#e4e1ed' },
-  { id: 5, name: 'Golden Cooking Oil', category: 'Groceries', price: 8700, icon: '🫒', label: 'Kitchen staple', tone: '#ede7cf' },
-  { id: 6, name: 'Everyday Sneakers', category: 'Fashion', price: 32000, icon: '👟', label: 'Easy to wear', tone: '#e6e3dc' },
-  { id: 7, name: 'Pour-Over Kettle', category: 'Home & Kitchen', price: 18500, icon: '🫖', label: 'Made for mornings', tone: '#dce8e6' },
-  { id: 8, name: 'Crunchy Breakfast Cereal', category: 'Groceries', price: 6400, icon: '🥣', label: 'Pantry pick', tone: '#f2e1d3' },
+  { id: 1, name: 'Everyday Rice', category: 'Groceries', price: 12500, icon: '🍚', label: 'Customer favourite', tone: 'rice' },
+  { id: 2, name: 'Classic Blender', category: 'Home & Kitchen', price: 28500, icon: '🥤', label: 'Good value', tone: 'blender' },
+  { id: 3, name: 'Soft Cotton T-Shirt', category: 'Fashion', price: 9500, icon: '👕', label: 'New arrival', tone: 'shirt' },
+  { id: 4, name: 'Wireless Headphones', category: 'Electronics', price: 42000, icon: '🎧', label: 'Popular pick', tone: 'audio' },
+  { id: 5, name: 'Golden Cooking Oil', category: 'Groceries', price: 8700, icon: '🫒', label: 'Kitchen staple', tone: 'oil' },
+  { id: 6, name: 'Everyday Sneakers', category: 'Fashion', price: 32000, icon: '👟', label: 'Easy to wear', tone: 'shoe' },
+  { id: 7, name: 'Pour-Over Kettle', category: 'Home & Kitchen', price: 18500, icon: '🫖', label: 'Made for mornings', tone: 'kettle' },
+  { id: 8, name: 'Crunchy Breakfast Cereal', category: 'Groceries', price: 6400, icon: '🥣', label: 'Pantry pick', tone: 'cereal' },
 ];
+
+const TONE_COLORS = {
+  rice: '#f1e5cc',
+  blender: '#e0e9dd',
+  shirt: '#e9dfe2',
+  audio: '#e4e1ed',
+  oil: '#ede7cf',
+  shoe: '#e6e3dc',
+  kettle: '#dce8e6',
+  cereal: '#f2e1d3',
+};
+
+const getToneColor = tone => TONE_COLORS[tone] || (tone && (tone.startsWith('#') || tone.startsWith('rgb')) ? tone : '#e8eadf');
 const money = value => `₦${Number(value).toLocaleString('en-NG')}`;
 
 export default function App() {
@@ -53,7 +66,11 @@ export default function App() {
     }
     loadCart();
     const channel = supabase.channel(`mobile-cart-${userId}`).on('postgres_changes', { event: '*', schema: 'public', table: 'carts', filter: `user_id=eq.${userId}` }, event => {
-      if (event.new?.items) setCart(current => JSON.stringify(current) === JSON.stringify(event.new.items) ? current : event.new.items);
+      if (event.eventType === 'DELETE') {
+        setCart([]);
+      } else if (event.new?.items) {
+        setCart(current => JSON.stringify(current) === JSON.stringify(event.new.items) ? current : event.new.items);
+      }
     }).subscribe();
     return () => { active = false; supabase.removeChannel(channel); };
   }, [session?.user?.id]);
@@ -73,16 +90,50 @@ export default function App() {
   async function signIn() {
     if (!supabase) { Alert.alert('Shop not connected', 'Add the Supabase URL and publishable key to mobile/.env.'); return; }
     const redirectTo = Linking.createURL('auth/callback');
-    const { data, error } = await supabase.auth.signInWithOAuth({ provider: 'google', options: { redirectTo, skipBrowserRedirect: true } });
+    console.log('Mobile OAuth redirect URL:', redirectTo);
+
+    const { data, error } = await supabase.auth.signInWithOAuth({
+      provider: 'google',
+      options: { redirectTo, skipBrowserRedirect: true },
+    });
     if (error) { Alert.alert('Could not sign in', error.message); return; }
+
     const result = await WebBrowser.openAuthSessionAsync(data.url, redirectTo);
     if (result.type !== 'success') return;
-    const params = new URLSearchParams((result.url.split('#')[1] || '').split('?')[0]);
-    const access_token = params.get('access_token');
-    const refresh_token = params.get('refresh_token');
-    if (!access_token || !refresh_token) { Alert.alert('Sign-in incomplete', params.get('error_description') || 'Please try again.'); return; }
-    const { error: sessionError } = await supabase.auth.setSession({ access_token, refresh_token });
-    if (sessionError) Alert.alert('Could not finish sign in', sessionError.message);
+
+    const url = result.url;
+    let access_token = null;
+    let refresh_token = null;
+    let code = null;
+    let error_description = null;
+
+    if (url.includes('#')) {
+      const hashPart = url.split('#')[1].split('?')[0];
+      const hashParams = new URLSearchParams(hashPart);
+      access_token = hashParams.get('access_token');
+      refresh_token = hashParams.get('refresh_token');
+      code = hashParams.get('code');
+      error_description = hashParams.get('error_description');
+    }
+
+    if (url.includes('?')) {
+      const queryPart = url.split('?')[1].split('#')[0];
+      const queryParams = new URLSearchParams(queryPart);
+      access_token = access_token || queryParams.get('access_token');
+      refresh_token = refresh_token || queryParams.get('refresh_token');
+      code = code || queryParams.get('code');
+      error_description = error_description || queryParams.get('error_description');
+    }
+
+    if (code) {
+      const { error: exchangeError } = await supabase.auth.exchangeCodeForSession(code);
+      if (exchangeError) Alert.alert('Could not finish sign in', exchangeError.message);
+    } else if (access_token && refresh_token) {
+      const { error: sessionError } = await supabase.auth.setSession({ access_token, refresh_token });
+      if (sessionError) Alert.alert('Could not finish sign in', sessionError.message);
+    } else {
+      Alert.alert('Sign-in incomplete', error_description || 'Please make sure redirect URLs are configured in Supabase.');
+    }
   }
   async function signOut() { await supabase?.auth.signOut(); setCart([]); setTab('Shop'); }
 
@@ -97,8 +148,8 @@ export default function App() {
       <View style={styles.hero}><Text style={styles.kicker}>A GOOD DAY TO FIND SOMETHING</Text><Text style={styles.heroTitle}>Good things,{'\n'}<Text style={styles.italic}>right this way.</Text></Text><Text style={styles.heroCopy}>Little upgrades, everyday essentials, and lovely finds for your home and life.</Text></View>
       <View style={styles.sectionHead}><Text style={styles.sectionTitle}>A few good finds</Text><Text style={styles.resultCount}>{visibleProducts.length} finds</Text></View>
       <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.filters}>{['All finds', 'Groceries', 'Home & Kitchen', 'Electronics', 'Fashion'].map(name => <TouchableOpacity key={name} style={[styles.filter, category === name && styles.filterSelected]} onPress={() => setCategory(name)}><Text style={[styles.filterText, category === name && styles.filterTextSelected]}>{name}</Text></TouchableOpacity>)}</ScrollView>
-      <View style={styles.grid}>{visibleProducts.map(product => <View key={product.id} style={styles.product}><View style={[styles.productArt, { backgroundColor: product.tone }]}><Text style={styles.productEmoji}>{product.icon}</Text><Text style={styles.productLabel}>{product.label}</Text></View><Text style={styles.productCategory}>{product.category}</Text><Text style={styles.productName}>{product.name}</Text><View style={styles.productBottom}><Text style={styles.price}>{money(product.price)}</Text><TouchableOpacity style={styles.addButton} onPress={() => add(product)}><Text style={styles.addText}>+ Add</Text></TouchableOpacity></View></View>)}</View>
-    </ScrollView> : <ScrollView contentContainerStyle={styles.content}><View style={styles.sectionHead}><Text style={styles.sectionTitle}>Your cart</Text><Text style={styles.resultCount}>{count} items</Text></View>{loading ? <ActivityIndicator color="#446b49" style={{ marginTop: 50 }} /> : !session?.user ? <View style={styles.empty}><Text style={styles.emptyEmoji}>🛍️</Text><Text style={styles.emptyTitle}>Sign in to see your cart</Text><Text style={styles.emptyCopy}>Your website cart will appear here after you sign in.</Text><TouchableOpacity style={styles.checkoutButton} onPress={signIn}><Text style={styles.checkoutText}>Sign in with Google</Text></TouchableOpacity></View> : cart.length === 0 ? <View style={styles.empty}><Text style={styles.emptyEmoji}>🛍️</Text><Text style={styles.emptyTitle}>Your cart is waiting</Text><Text style={styles.emptyCopy}>Add a few good finds on the website or here.</Text><TouchableOpacity style={styles.checkoutButton} onPress={() => setTab('Shop')}><Text style={styles.checkoutText}>Explore the shop</Text></TouchableOpacity></View> : <><View>{cart.map(item => <View style={styles.cartItem} key={item.id}><View style={[styles.cartArt, { backgroundColor: item.tone || '#e8eadf' }]}><Text style={{ fontSize: 27 }}>{item.icon}</Text></View><View style={styles.cartDetails}><Text style={styles.productName}>{item.name}</Text><Text style={styles.cartPrice}>{money(item.price)}</Text><View style={styles.quantity}><TouchableOpacity onPress={() => adjust(item.id, -1)}><Text style={styles.quantityButton}>−</Text></TouchableOpacity><Text>{item.quantity}</Text><TouchableOpacity onPress={() => adjust(item.id, 1)}><Text style={styles.quantityButton}>+</Text></TouchableOpacity></View></View></View>)}</View><View style={styles.summary}><View style={styles.summaryRow}><Text style={styles.summaryLabel}>Subtotal</Text><Text style={styles.summaryTotal}>{money(total)}</Text></View><Text style={styles.syncHint}>{syncing ? 'Syncing your cart…' : 'Cart synced with your shop account'}</Text></View></>}</ScrollView>}
+      <View style={styles.grid}>{visibleProducts.map(product => <View key={product.id} style={styles.product}><View style={[styles.productArt, { backgroundColor: getToneColor(product.tone) }]}><Text style={styles.productEmoji}>{product.icon}</Text><Text style={styles.productLabel}>{product.label}</Text></View><Text style={styles.productCategory}>{product.category}</Text><Text style={styles.productName}>{product.name}</Text><View style={styles.productBottom}><Text style={styles.price}>{money(product.price)}</Text><TouchableOpacity style={styles.addButton} onPress={() => add(product)}><Text style={styles.addText}>+ Add</Text></TouchableOpacity></View></View>)}</View>
+    </ScrollView> : <ScrollView contentContainerStyle={styles.content}><View style={styles.sectionHead}><Text style={styles.sectionTitle}>Your cart</Text><Text style={styles.resultCount}>{count} items</Text></View>{loading ? <ActivityIndicator color="#446b49" style={{ marginTop: 50 }} /> : !session?.user ? <View style={styles.empty}><Text style={styles.emptyEmoji}>🛍️</Text><Text style={styles.emptyTitle}>Sign in to see your cart</Text><Text style={styles.emptyCopy}>Your website cart will appear here after you sign in.</Text><TouchableOpacity style={styles.checkoutButton} onPress={signIn}><Text style={styles.checkoutText}>Sign in with Google</Text></TouchableOpacity></View> : cart.length === 0 ? <View style={styles.empty}><Text style={styles.emptyEmoji}>🛍️</Text><Text style={styles.emptyTitle}>Your cart is waiting</Text><Text style={styles.emptyCopy}>Add a few good finds on the website or here.</Text><TouchableOpacity style={styles.checkoutButton} onPress={() => setTab('Shop')}><Text style={styles.checkoutText}>Explore the shop</Text></TouchableOpacity></View> : <><View>{cart.map(item => <View style={styles.cartItem} key={item.id}><View style={[styles.cartArt, { backgroundColor: getToneColor(item.tone) }]}><Text style={{ fontSize: 27 }}>{item.icon}</Text></View><View style={styles.cartDetails}><Text style={styles.productName}>{item.name}</Text><Text style={styles.cartPrice}>{money(item.price)}</Text><View style={styles.quantity}><TouchableOpacity onPress={() => adjust(item.id, -1)}><Text style={styles.quantityButton}>−</Text></TouchableOpacity><Text>{item.quantity}</Text><TouchableOpacity onPress={() => adjust(item.id, 1)}><Text style={styles.quantityButton}>+</Text></TouchableOpacity></View></View></View>)}</View><View style={styles.summary}><View style={styles.summaryRow}><Text style={styles.summaryLabel}>Subtotal</Text><Text style={styles.summaryTotal}>{money(total)}</Text></View><Text style={styles.syncHint}>{syncing ? 'Syncing your cart…' : 'Cart synced with your shop account'}</Text></View></>}</ScrollView>}
     <View style={styles.bottomNav}><TouchableOpacity onPress={() => setTab('Shop')} style={styles.navItem}><Text style={[styles.navIcon, tab === 'Shop' && styles.navActive]}>⌂</Text><Text style={[styles.navLabel, tab === 'Shop' && styles.navActive]}>Shop</Text></TouchableOpacity><TouchableOpacity onPress={() => setTab('Cart')} style={styles.navItem}><Text style={[styles.navIcon, tab === 'Cart' && styles.navActive]}>▱ {count ? `(${count})` : ''}</Text><Text style={[styles.navLabel, tab === 'Cart' && styles.navActive]}>Cart</Text></TouchableOpacity></View>
   </SafeAreaView>;
 }
